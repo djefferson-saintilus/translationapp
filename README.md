@@ -1,6 +1,6 @@
 **TranslationApp: Your Multilingual Translation Companion**
 
-!(translation)[./translationapp.png]
+![translation](./translationapp.png)
 
 TranslationApp is a user-friendly and efficient translation tool designed to make language translation a breeze. Whether you're a traveler, a language learner, or simply need to communicate across language barriers, TranslationApp has got you covered. Here's why you'll love using TranslationApp:
 
