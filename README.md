@@ -24,7 +24,7 @@ Translation App is a simple desktop application that allows users to translate t
 1. Clone the repository to your local machine:
 
 ```bash
-git clone https://github.com/your-username/translation-app.git
+git clone https://github.com/djefferson-saintilus/translationapp.git
 ```
 
 2. Install the required dependencies:
@@ -35,10 +35,10 @@ pip install PyQt6 googletrans==4.0.0-rc1
 
 ## Usage
 
-1. Run the `TranslationApp.py` script:
+1. Run the `translationapp.py` script:
 
 ```bash
-python TranslationApp.py
+python translationapp.py
 ```
 
 2. The Translation App window will open. You can see the logo at the top and two dropdown menus to select the origin and target languages. Enter the text you want to translate in the "Enter text to translate..." field.
