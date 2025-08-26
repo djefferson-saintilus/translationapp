@@ -1,15 +1,17 @@
 import sys
+import os
 from PyQt6.QtWidgets import QApplication, QMainWindow, QWidget, QVBoxLayout, QLabel, QPlainTextEdit, QTextEdit, QPushButton, QComboBox, QGridLayout, QMessageBox
 from PyQt6.QtGui import QIcon, QPixmap
 from PyQt6.QtCore import Qt
-from googletrans import Translator
+from googletrans import Translator, LANGCODES
 
 class TranslationApp(QMainWindow):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
+        self.translator = Translator()
         self.initUI()
 
-    def initUI(self):
+    def initUI(self) -> None:
         self.setWindowTitle("Translation App")
         self.setFixedSize(500, 400)
         self.setStyleSheet(
@@ -27,12 +29,19 @@ class TranslationApp(QMainWindow):
 
         # Logo
         logo_label = QLabel(self)
-        logo_label.setPixmap(QPixmap("logo.png"))
+        # Resolve logo path robustly; hide if not present
+        app_dir = os.path.dirname(os.path.abspath(__file__))
+        logo_path = os.path.join(app_dir, "logo.png")
+        if os.path.exists(logo_path):
+            logo_label.setPixmap(QPixmap(logo_path))
+            self.setWindowIcon(QIcon(logo_path))
+        else:
+            logo_label.setVisible(False)
         logo_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         # Origin language input
         self.origin_combo = QComboBox()
-        self.origin_combo.addItems(["English", "Spanish", "French", "German", "Japanese", "Korean"])
+        self.origin_combo.addItems(["Auto", "English", "Spanish", "French", "German", "Japanese", "Korean"])
         self.origin_combo.setStyleSheet(
             """
             background-color: #75715E;
@@ -52,15 +61,6 @@ class TranslationApp(QMainWindow):
 
         # Copy translated text button
         self.copy_button = QPushButton("Copy Translated Text")
-        self.copy_button.setStyleSheet(
-            """
-            background-color: #A6E22E;
-            color: black;
-            font-weight: bold;
-            padding: 10px;
-            border-radius: 5px;
-            """
-        )
         self.copy_button.clicked.connect(self.copyTranslatedText)
 
         # Input text to translate
@@ -85,7 +85,7 @@ class TranslationApp(QMainWindow):
         )
         self.translated_text.setLineWrapMode(QTextEdit.LineWrapMode.WidgetWidth)
         self.translated_text.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
-        self.translated_text.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        self.translated_text.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
 
         # Translate button
         self.translate_button = QPushButton("Translate")
@@ -145,10 +145,9 @@ class TranslationApp(QMainWindow):
         self.copy_button.setStyleSheet(copy_button_style)
         self.translate_button.setStyleSheet(button_style)
 
-    def translateText(self):
-        translator = Translator()
-        origin_lang = self.origin_combo.currentText()
-        target_lang = self.target_combo.currentText()
+    def translateText(self) -> None:
+        origin_name = self.origin_combo.currentText()
+        target_name = self.target_combo.currentText()
         text_to_translate = self.input_text.toPlainText()
 
         # Check if the input text is empty before proceeding with translation
@@ -156,14 +155,27 @@ class TranslationApp(QMainWindow):
             QMessageBox.warning(self, "Input Error", "Please enter text to translate.")
             return
 
+        # Prevent no-op translations
+        if origin_name == target_name and origin_name != "Auto":
+            QMessageBox.information(self, "No translation", "Origin and target are the same.")
+            return
+
+        # Map human-readable names to language codes
         try:
-            translated_result = translator.translate(text_to_translate, src=origin_lang.lower(), dest=target_lang.lower())
+            src_code = "auto" if origin_name == "Auto" else LANGCODES[origin_name.lower()]
+            dest_code = LANGCODES[target_name.lower()]
+        except KeyError:
+            QMessageBox.warning(self, "Language Error", "Unsupported language selection.")
+            return
+
+        try:
+            translated_result = self.translator.translate(text_to_translate, src=src_code, dest=dest_code)
             self.translated_text.setPlainText(translated_result.text)
-            # You can add the translation to favorites here if you want
         except Exception as e:
             self.translated_text.setPlainText("Translation Error")
+            QMessageBox.critical(self, "Translation Error", f"An error occurred while translating: {e}")
 
-    def copyTranslatedText(self):
+    def copyTranslatedText(self) -> None:
         translated_text = self.translated_text.toPlainText()
         if translated_text:
             clipboard = QApplication.clipboard()
